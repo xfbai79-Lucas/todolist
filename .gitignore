@@ -1,8 +1,10 @@
-# Nestjs specific
-/dist
-/node_modules
-/build
-/tmp
+# Node / build outputs
+node_modules
+dist
+build
+tmp
+.temp
+.tmp
 
 # Logs
 logs
@@ -19,6 +21,8 @@ lerna-debug.log*
 .env.test
 .env.production
 
-# temp directory
-.temp
-.tmp
+# Local SQLite DB
+data/tasks.db
+
+# macOS
+.DS_Store

@@ -1,0 +1,511 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>任务管理系统</title>
+    <style>
+      :root {
+        --bg: #f4f7fb;
+        --card-bg: #ffffff;
+        --text: #1f2937;
+        --muted: #6b7280;
+        --border: #e5e7eb;
+        --primary: #2563eb;
+        --primary-hover: #1d4ed8;
+        --danger: #ef4444;
+        --danger-hover: #dc2626;
+        --todo: #fb923c;
+        --done: #22c55e;
+        --shadow: 0 10px 25px rgba(15, 23, 42, 0.08);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        font-family: "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+        background: linear-gradient(180deg, #f8fbff 0%, var(--bg) 100%);
+        color: var(--text);
+        max-width: 980px;
+        margin: 28px auto 48px;
+        padding: 0 14px;
+      }
+      h1 {
+        margin: 0 0 16px;
+        font-size: 30px;
+        letter-spacing: 0.5px;
+      }
+      h2 {
+        margin: 0 0 14px;
+      }
+      .card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        box-shadow: var(--shadow);
+        padding: 16px;
+      }
+      form {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 14px;
+      }
+      .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+      }
+      label {
+        font-size: 13px;
+        font-weight: 600;
+        color: #374151;
+      }
+      input,
+      textarea,
+      select,
+      button {
+        padding: 10px 12px;
+        font-size: 14px;
+        border-radius: 10px;
+        border: 1px solid #d1d5db;
+      }
+      input[type="text"] {
+        min-width: 100%;
+      }
+      textarea {
+        min-height: 110px;
+        resize: vertical;
+      }
+      input:focus,
+      textarea:focus,
+      select:focus {
+        outline: none;
+        border-color: #93c5fd;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.14);
+      }
+      button {
+        border: none;
+        cursor: pointer;
+        transition: all 0.18s ease;
+      }
+      button:hover {
+        transform: translateY(-1px);
+      }
+      #task-form button[type="submit"] {
+        background: var(--primary);
+        color: #fff;
+        font-weight: 600;
+      }
+      #task-form button[type="submit"]:hover {
+        background: var(--primary-hover);
+      }
+      .toolbar {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin: 16px 0 10px;
+      }
+      #refresh-btn {
+        background: #fff;
+        color: var(--primary);
+        border: 1px solid #bfdbfe;
+        font-weight: 600;
+      }
+      #refresh-btn:hover {
+        background: #eff6ff;
+      }
+      ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+      }
+      li {
+        background: #fff;
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
+        padding: 12px;
+        margin-bottom: 10px;
+        display: flex;
+        justify-content: space-between;
+        gap: 10px;
+      }
+      .task-title {
+        font-weight: 700;
+        font-size: 16px;
+      }
+      .done {
+        text-decoration: line-through;
+        color: #9ca3af;
+      }
+      .actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .actions button:first-child {
+        background: #e8f8ee;
+        color: #166534;
+      }
+      .actions button:first-child:hover {
+        background: #dcfce7;
+      }
+      .actions button:last-child {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .actions button:last-child:hover {
+        background: #fecaca;
+      }
+      .meta {
+        font-size: 12px;
+        color: var(--muted);
+        margin-top: 8px;
+      }
+      .task-desc {
+        white-space: pre-wrap;
+        margin-top: 6px;
+        line-height: 1.55;
+      }
+      .stats-box {
+        margin-top: 24px;
+        padding: 16px;
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        background: var(--card-bg);
+        box-shadow: var(--shadow);
+      }
+      .stats-controls {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-bottom: 14px;
+      }
+      .pie-chart {
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        border: 1px solid #d1d5db;
+        background: #fff;
+      }
+      .stats-summary {
+        margin-top: 12px;
+        display: grid;
+        gap: 6px;
+        font-size: 15px;
+      }
+      .legend {
+        display: flex;
+        gap: 14px;
+        margin-top: 10px;
+        color: #374151;
+        font-size: 13px;
+      }
+      .dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 6px;
+      }
+      .dot.todo {
+        background: var(--todo);
+      }
+      .dot.done {
+        background: var(--done);
+      }
+      @media (max-width: 640px) {
+        li {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .actions {
+          justify-content: flex-end;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>任务管理系统</h1>
+
+    <section class="card">
+      <form id="task-form">
+        <div class="form-row">
+          <label for="title">任务标题</label>
+          <input id="title" type="text" placeholder="请输入任务标题（必填）" required />
+        </div>
+        <div class="form-row">
+          <label for="description">任务描述</label>
+          <textarea id="description" placeholder="请输入任务描述（可多行，可选）"></textarea>
+        </div>
+        <div class="form-row">
+          <label for="dueDate">截止日期（仅可选择未来3年内）</label>
+          <input id="dueDate" type="date" />
+        </div>
+        <button type="submit">新建任务</button>
+      </form>
+    </section>
+
+    <div class="toolbar">
+      <strong>任务列表</strong>
+      <button id="refresh-btn">刷新列表</button>
+    </div>
+    <ul id="task-list"></ul>
+
+    <section class="stats-box">
+      <h2>任务统计（未完成/已完成）</h2>
+      <div class="stats-controls">
+        <div>
+          <label for="statsYear">统计年</label>
+          <select id="statsYear"></select>
+        </div>
+        <div>
+          <label for="statsMonth">统计月</label>
+          <select id="statsMonth">
+            <option value="">全年</option>
+          </select>
+        </div>
+      </div>
+      <canvas id="pieChart" class="pie-chart" width="240" height="240"></canvas>
+      <div class="legend">
+        <span><i class="dot todo"></i>未完成</span>
+        <span><i class="dot done"></i>已完成</span>
+      </div>
+      <div id="statsSummary" class="stats-summary"></div>
+    </section>
+
+    <script>
+      const taskForm = document.getElementById("task-form");
+      const titleInput = document.getElementById("title");
+      const descriptionInput = document.getElementById("description");
+      const dueDateInput = document.getElementById("dueDate");
+      const refreshBtn = document.getElementById("refresh-btn");
+      const taskList = document.getElementById("task-list");
+      const statsYearSelect = document.getElementById("statsYear");
+      const statsMonthSelect = document.getElementById("statsMonth");
+      const pieChart = document.getElementById("pieChart");
+      const statsSummary = document.getElementById("statsSummary");
+      let currentTasks = [];
+
+      function setupDatePickerRange() {
+        const today = new Date();
+        const minDate = new Date(today);
+        minDate.setDate(minDate.getDate() + 1);
+        const maxDate = new Date(today);
+        maxDate.setFullYear(maxDate.getFullYear() + 3);
+        const toDateString = (date) => date.toISOString().slice(0, 10);
+        dueDateInput.min = toDateString(minDate);
+        dueDateInput.max = toDateString(maxDate);
+      }
+
+      function setupMonthOptions() {
+        for (let month = 1; month <= 12; month += 1) {
+          const option = document.createElement("option");
+          option.value = String(month);
+          option.textContent = month + "月";
+          statsMonthSelect.appendChild(option);
+        }
+      }
+
+      async function fetchTasks() {
+        const res = await fetch("/api/tasks");
+        if (!res.ok) throw new Error("获取任务失败");
+        return res.json();
+      }
+
+      async function createTask(payload) {
+        const res = await fetch("/api/tasks", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload),
+        });
+        if (!res.ok) throw new Error("创建任务失败");
+        return res.json();
+      }
+
+      async function updateTaskStatus(id, completed) {
+        const res = await fetch(`/api/tasks/${id}/status`, {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ completed }),
+        });
+        if (!res.ok) throw new Error("更新任务状态失败");
+        return res.json();
+      }
+
+      async function deleteTask(id) {
+        const res = await fetch(`/api/tasks/${id}`, { method: "DELETE" });
+        if (!res.ok) throw new Error("删除任务失败");
+      }
+
+      function renderTasks(tasks) {
+        taskList.innerHTML = "";
+        if (tasks.length === 0) {
+          taskList.innerHTML = "<li>暂无任务，快创建一个吧</li>";
+          return;
+        }
+
+        for (const task of tasks) {
+          const li = document.createElement("li");
+
+          const info = document.createElement("div");
+          info.innerHTML = `
+            <div class="task-title ${task.completed ? "done" : ""}">${task.title}</div>
+            <div class="task-desc">${task.description || ""}</div>
+            <div class="meta">截止日期: ${task.due_date || "未设置"} | 创建时间: ${task.created_at}</div>
+          `;
+
+          const actions = document.createElement("div");
+          actions.className = "actions";
+
+          const toggleBtn = document.createElement("button");
+          toggleBtn.textContent = task.completed ? "标记未完成" : "标记完成";
+          toggleBtn.onclick = async () => {
+            await updateTaskStatus(task.id, !task.completed);
+            await loadTasks();
+          };
+
+          const deleteBtn = document.createElement("button");
+          deleteBtn.textContent = "删除";
+          deleteBtn.onclick = async () => {
+            await deleteTask(task.id);
+            await loadTasks();
+          };
+
+          actions.appendChild(toggleBtn);
+          actions.appendChild(deleteBtn);
+          li.appendChild(info);
+          li.appendChild(actions);
+          taskList.appendChild(li);
+        }
+      }
+
+      function extractYearMonth(task) {
+        const datePart = String(task.created_at || "").slice(0, 10);
+        const [year, month] = datePart.split("-");
+        return { year, month: Number(month) };
+      }
+
+      function updateYearOptions(tasks) {
+        const yearSet = new Set();
+        tasks.forEach((task) => {
+          const ym = extractYearMonth(task);
+          if (ym.year) yearSet.add(ym.year);
+        });
+        const years = Array.from(yearSet).sort();
+
+        const oldValue = statsYearSelect.value;
+        statsYearSelect.innerHTML = "";
+        const allOption = document.createElement("option");
+        allOption.value = "";
+        allOption.textContent = "全部年份";
+        statsYearSelect.appendChild(allOption);
+
+        years.forEach((year) => {
+          const option = document.createElement("option");
+          option.value = year;
+          option.textContent = year + "年";
+          statsYearSelect.appendChild(option);
+        });
+
+        if (years.includes(oldValue)) {
+          statsYearSelect.value = oldValue;
+        }
+      }
+
+      function filterTasksForStats(tasks) {
+        const selectedYear = statsYearSelect.value;
+        const selectedMonth = statsMonthSelect.value;
+        return tasks.filter((task) => {
+          const ym = extractYearMonth(task);
+          if (selectedYear && ym.year !== selectedYear) return false;
+          if (selectedMonth && ym.month !== Number(selectedMonth)) return false;
+          return true;
+        });
+      }
+
+      function drawPieChart(todoCount, doneCount) {
+        const total = todoCount + doneCount;
+        const ctx = pieChart.getContext("2d");
+        ctx.clearRect(0, 0, pieChart.width, pieChart.height);
+
+        if (total === 0) {
+          ctx.fillStyle = "#eee";
+          ctx.beginPath();
+          ctx.arc(120, 120, 100, 0, Math.PI * 2);
+          ctx.fill();
+          return;
+        }
+
+        const todoAngle = (todoCount / total) * Math.PI * 2;
+        ctx.beginPath();
+        ctx.moveTo(120, 120);
+        ctx.fillStyle = "#ff8a65";
+        ctx.arc(120, 120, 100, 0, todoAngle);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.beginPath();
+        ctx.moveTo(120, 120);
+        ctx.fillStyle = "#66bb6a";
+        ctx.arc(120, 120, 100, todoAngle, Math.PI * 2);
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      function renderStats(tasks) {
+        const filtered = filterTasksForStats(tasks);
+        let doneCount = 0;
+        let todoCount = 0;
+        filtered.forEach((task) => {
+          if (task.completed) doneCount += 1;
+          else todoCount += 1;
+        });
+
+        drawPieChart(todoCount, doneCount);
+        const total = doneCount + todoCount;
+        statsSummary.innerHTML = `
+          <div>总任务数：${total}</div>
+          <div style="color:#f97316;">未完成：${todoCount}</div>
+          <div style="color:#16a34a;">已完成：${doneCount}</div>
+        `;
+      }
+
+      async function loadTasks() {
+        try {
+          const tasks = await fetchTasks();
+          currentTasks = tasks;
+          renderTasks(tasks);
+          updateYearOptions(tasks);
+          renderStats(tasks);
+        } catch (err) {
+          alert(err.message);
+        }
+      }
+
+      taskForm.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        try {
+          await createTask({
+            title: titleInput.value.trim(),
+            description: descriptionInput.value.trim(),
+            dueDate: dueDateInput.value || null,
+          });
+          taskForm.reset();
+          await loadTasks();
+        } catch (err) {
+          alert(err.message);
+        }
+      });
+
+      refreshBtn.addEventListener("click", loadTasks);
+      statsYearSelect.addEventListener("change", () => renderStats(currentTasks));
+      statsMonthSelect.addEventListener("change", () => renderStats(currentTasks));
+
+      setupDatePickerRange();
+      setupMonthOptions();
+      loadTasks();
+    </script>
+  </body>
+</html>
